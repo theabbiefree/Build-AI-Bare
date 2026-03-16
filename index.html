@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Build-AI-Bare — Stuff it with whatever you need.</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0e0f0f;
+    --bg2: #161818;
+    --bg3: #1e2020;
+    --border: rgba(255,255,255,0.08);
+    --border-hover: rgba(255,255,255,0.18);
+    --accent: #1D9E75;
+    --accent-light: #5DCAA5;
+    --accent-dim: rgba(29,158,117,0.15);
+    --text: #f0ede8;
+    --text2: #9a9790;
+    --text3: #5c5a56;
+    --mono: 'Space Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* noise texture overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.6;
+  }
+
+  /* ── HEADER ── */
+  header {
+    position: relative;
+    z-index: 10;
+    padding: 2.5rem 2rem 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .logo {
+    font-family: var(--mono);
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+  .logo span { color: var(--accent-light); }
+
+  .badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 4px 10px;
+    border: 1px solid var(--border-hover);
+    border-radius: 20px;
+    color: var(--text2);
+    letter-spacing: 1px;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    position: relative;
+    z-index: 10;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 4rem 2rem 2rem;
+    text-align: center;
+  }
+
+  .bear-glyph {
+    font-size: 4rem;
+    display: block;
+    margin-bottom: 1.5rem;
+    animation: float 4s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  h1 {
+    font-family: var(--mono);
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -1.5px;
+    margin-bottom: 1rem;
+  }
+
+  h1 em {
+    font-style: normal;
+    color: var(--accent-light);
+  }
+
+  .hero-sub {
+    font-size: 1.05rem;
+    color: var(--text2);
+    max-width: 480px;
+    margin: 0 auto 2.5rem;
+    line-height: 1.6;
+  }
+
+  /* ── PROGRESS BAR ── */
+  .progress-wrap {
+    max-width: 680px;
+    margin: 0 auto 2.5rem;
+    padding: 0 2rem;
+    position: relative;
+    z-index: 10;
+  }
+
+  .progress-track {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 0.5rem;
+  }
+
+  .prog-seg {
+    flex: 1;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--bg3);
+    transition: background 0.4s ease;
+  }
+  .prog-seg.done { background: var(--accent); }
+  .prog-seg.active { background: var(--accent-light); }
+
+  .progress-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    font-family: var(--mono);
+    color: var(--text3);
+    letter-spacing: 0.5px;
+  }
+
+  /* ── MAIN CARD ── */
+  .main-card {
+    position: relative;
+    z-index: 10;
+    max-width: 680px;
+    margin: 0 auto 4rem;
+    padding: 0 2rem;
+  }
+
+  .section { display: none; }
+  .section.active {
+    display: block;
+    animation: slideUp 0.3s ease;
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .section-eyebrow {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  .section-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    margin-bottom: 0.4rem;
+  }
+
+  .section-sub {
+    font-size: 0.9rem;
+    color: var(--text2);
+    margin-bottom: 1.75rem;
+    line-height: 1.5;
+  }
+
+  /* ── OPTION CARDS ── */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+    gap: 10px;
+    margin-bottom: 2rem;
+  }
+
+  .opt-card {
+    background: var(--bg2);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.1rem 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    user-select: none;
+  }
+
+  .opt-card:hover {
+    border-color: var(--border-hover);
+    background: var(--bg3);
+    transform: translateY(-2px);
+  }
+
+  .opt-card.selected {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+  }
+
+  .opt-card.selected::after {
+    content: '✓';
+    position: absolute;
+    top: 10px; right: 12px;
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--accent-light);
+    font-weight: 700;
+  }
+
+  .opt-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0.6rem;
+    display: block;
+    line-height: 1;
+  }
+
+  .opt-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 3px;
+  }
+
+  .opt-desc {
+    font-size: 0.78rem;
+    color: var(--text2);
+    line-height: 1.4;
+  }
+
+  .multi-note {
+    font-size: 0.8rem;
+    color: var(--text3);
+    font-family: var(--mono);
+    margin-bottom: 1rem;
+  }
+
+  /* ── INPUTS ── */
+  .field { margin-bottom: 1.25rem; }
+
+  .field label {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text2);
+    margin-bottom: 6px;
+    letter-spacing: 0.3px;
+  }
+
+  .field input,
+  .field textarea {
+    width: 100%;
+    background: var(--bg2);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 11px 14px;
+    font-family: var(--sans);
+    font-size: 0.95rem;
+    color: var(--text);
+    transition: border-color 0.2s;
+    outline: none;
+    resize: vertical;
+  }
+
+  .field input:focus,
+  .field textarea:focus {
+    border-color: var(--accent);
+  }
+
+  .field input::placeholder,
+  .field textarea::placeholder {
+    color: var(--text3);
+  }
+
+  .field textarea { min-height: 90px; }
+
+  /* ── SLIDERS ── */
+  .slider-field { margin-bottom: 1.5rem; }
+
+  .slider-field label {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text2);
+    margin-bottom: 10px;
+  }
+
+  .slider-field input[type=range] {
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--bg3);
+    outline: none;
+    cursor: pointer;
+  }
+
+  .slider-field input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--accent-light);
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+
+  .slider-field input[type=range]::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+  }
+
+  .slider-ticks {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-size: 0.72rem;
+    color: var(--text3);
+    font-family: var(--mono);
+  }
+
+  .slider-val {
+    display: inline-block;
+    margin-left: 8px;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--accent-light);
+  }
+
+  /* ── NAV ── */
+  .nav-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 2rem;
+    gap: 12px;
+  }
+
+  .btn {
+    font-family: var(--sans);
+    font-size: 0.9rem;
+    font-weight: 500;
+    padding: 11px 24px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.18s;
+    border: 1.5px solid;
+    letter-spacing: 0.2px;
+  }
+
+  .btn-ghost {
+    background: transparent;
+    border-color: var(--border-hover);
+    color: var(--text2);
+  }
+  .btn-ghost:hover { border-color: var(--text2); color: var(--text); }
+
+  .btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .btn-primary:hover { background: #16835f; border-color: #16835f; }
+  .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .btn-big {
+    padding: 14px 32px;
+    font-size: 1rem;
+    border-radius: var(--radius);
+  }
+
+  /* ── OUTPUT ── */
+  .output-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 1rem;
+  }
+
+  .ai-avatar {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    background: var(--accent-dim);
+    border: 2px solid var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+  }
+
+  .ai-name-display {
+    font-size: 1.3rem;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+  }
+
+  .ai-name-sub {
+    font-size: 0.8rem;
+    color: var(--text2);
+    font-family: var(--mono);
+  }
+
+  .chips-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 1.5rem;
+  }
+
+  .chip {
+    font-size: 0.75rem;
+    font-family: var(--mono);
+    padding: 5px 12px;
+    border-radius: 20px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--accent-light);
+  }
+
+  .prompt-box {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    line-height: 1.8;
+    color: var(--text2);
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 320px;
+    overflow-y: auto;
+    margin-bottom: 1.5rem;
+  }
+
+  .prompt-box::-webkit-scrollbar { width: 6px; }
+  .prompt-box::-webkit-scrollbar-track { background: transparent; }
+  .prompt-box::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 3px; }
+
+  .actions-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 1rem;
+  }
+
+  .action-btn {
+    background: var(--bg2);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    cursor: pointer;
+    transition: all 0.18s;
+    text-align: center;
+    color: var(--text);
+    font-family: var(--sans);
+  }
+
+  .action-btn:hover { border-color: var(--border-hover); background: var(--bg3); }
+
+  .action-btn .ab-icon { font-size: 1.3rem; display: block; margin-bottom: 4px; }
+  .action-btn .ab-label { font-size: 0.82rem; font-weight: 500; }
+  .action-btn .ab-sub { font-size: 0.72rem; color: var(--text2); }
+
+  .restart-btn {
+    width: 100%;
+    text-align: center;
+    background: transparent;
+    border: 1.5px dashed var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    cursor: pointer;
+    color: var(--text3);
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    transition: all 0.18s;
+  }
+  .restart-btn:hover { border-color: var(--border-hover); color: var(--text2); }
+
+  /* ── COPY TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--accent);
+    color: #fff;
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    padding: 10px 24px;
+    border-radius: 30px;
+    transition: transform 0.3s ease;
+    z-index: 999;
+    pointer-events: none;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ── FOOTER ── */
+  footer {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    padding: 2rem;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--text3);
+    border-top: 1px solid var(--border);
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  footer a { color: var(--accent-light); text-decoration: none; }
+
+  /* ── RESPONSIVE ── */
+  @media(max-width: 500px) {
+    .cards-grid { grid-template-columns: 1fr 1fr; }
+    .actions-grid { grid-template-columns: 1fr; }
+    h1 { font-size: 1.8rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Build-AI-<span>Bare</span></div>
+  <div class="badge">v0.1 — OPEN SOURCE</div>
+</header>
+
+<div class="hero">
+  <span class="bear-glyph">🐻</span>
+  <h1>Build your<br/><em>perfect AI.</em></h1>
+  <p class="hero-sub">No code. No API keys. Pick your options, get a ready-to-use system prompt in 60 seconds.</p>
+</div>
+
+<div class="progress-wrap">
+  <div class="progress-track" id="progTrack"></div>
+  <div class="progress-labels">
+    <span>Purpose</span><span>Personality</span><span>Tools</span><span>Identity</span><span>Guardrails</span><span>Done</span>
+  </div>
+</div>
+
+<div class="main-card">
+
+  <!-- STEP 0: PURPOSE -->
+  <div class="section active" id="sec0">
+    <div class="section-eyebrow">Step 1 of 6</div>
+    <div class="section-title">What's this AI for?</div>
+    <div class="section-sub">Choose the primary purpose. This shapes everything else.</div>
+    <div class="cards-grid" id="purpose-grid">
+      <div class="opt-card" data-val="personal"><span class="opt-icon">🗓️</span><div class="opt-label">Personal assistant</div><div class="opt-desc">Life, tasks & planning</div></div>
+      <div class="opt-card" data-val="creative"><span class="opt-icon">✍️</span><div class="opt-label">Creative writing</div><div class="opt-desc">Stories, scripts & ideas</div></div>
+      <div class="opt-card" data-val="business"><span class="opt-icon">📊</span><div class="opt-label">Business & productivity</div><div class="opt-desc">Workflows & analysis</div></div>
+      <div class="opt-card" data-val="research"><span class="opt-icon">🔬</span><div class="opt-label">Research & learning</div><div class="opt-desc">Deep dives & study</div></div>
+      <div class="opt-card" data-val="coding"><span class="opt-icon">💻</span><div class="opt-label">Coding companion</div><div class="opt-desc">Debug, review & build</div></div>
+      <div class="opt-card" data-val="support"><span class="opt-icon">💬</span><div class="opt-label">Customer support</div><div class="opt-desc">Help desk & FAQ bot</div></div>
+    </div>
+    <div class="nav-row">
+      <span></span>
+      <button class="btn btn-primary btn-big" id="next0" disabled onclick="goNext(0)">Continue →</button>
+    </div>
+  </div>
+
+  <!-- STEP 1: PERSONALITY -->
+  <div class="section" id="sec1">
+    <div class="section-eyebrow">Step 2 of 6</div>
+    <div class="section-title">Pick a personality.</div>
+    <div class="section-sub">How should your AI sound and feel to talk to?</div>
+    <div class="cards-grid" id="personality-grid">
+      <div class="opt-card" data-val="professional"><span class="opt-icon">🎯</span><div class="opt-label">Professional</div><div class="opt-desc">Precise, formal, clear</div></div>
+      <div class="opt-card" data-val="warm"><span class="opt-icon">☀️</span><div class="opt-label">Warm & friendly</div><div class="opt-desc">Approachable & kind</div></div>
+      <div class="opt-card" data-val="witty"><span class="opt-icon">⚡</span><div class="opt-label">Witty & playful</div><div class="opt-desc">Clever, fun & punchy</div></div>
+      <div class="opt-card" data-val="socratic"><span class="opt-icon">🦉</span><div class="opt-label">Socratic</div><div class="opt-desc">Asks questions & challenges</div></div>
+      <div class="opt-card" data-val="concise"><span class="opt-icon">✂️</span><div class="opt-label">Ultra-concise</div><div class="opt-desc">Short answers only</div></div>
+      <div class="opt-card" data-val="mentor"><span class="opt-icon">🎓</span><div class="opt-label">Mentor</div><div class="opt-desc">Teaches & guides</div></div>
+    </div>
+    <div class="nav-row">
+      <button class="btn btn-ghost" onclick="goBack(1)">← Back</button>
+      <button class="btn btn-primary btn-big" id="next1" disabled onclick="goNext(1)">Continue →</button>
+    </div>
+  </div>
+
+  <!-- STEP 2: TOOLS -->
+  <div class="section" id="sec2">
+    <div class="section-eyebrow">Step 3 of 6</div>
+    <div class="section-title">Equip the tools.</div>
+    <div class="section-sub">Select all capabilities your AI should have. You can choose multiple.</div>
+    <div class="multi-note">// multi-select enabled</div>
+    <div class="cards-grid" id="tools-grid">
+      <div class="opt-card" data-val="web_search"><span class="opt-icon">🌐</span><div class="opt-label">Web search</div><div class="opt-desc">Current info & news</div></div>
+      <div class="opt-card" data-val="code_exec"><span class="opt-icon">⚙️</span><div class="opt-label">Code execution</div><div class="opt-desc">Run & test code</div></div>
+      <div class="opt-card" data-val="files"><span class="opt-icon">📁</span><div class="opt-label">File reading</div><div class="opt-desc">Docs, PDFs & data</div></div>
+      <div class="opt-card" data-val="email_cal"><span class="opt-icon">📧</span><div class="opt-label">Email & calendar</div><div class="opt-desc">Gmail & scheduling</div></div>
+      <div class="opt-card" data-val="image_gen"><span class="opt-icon">🎨</span><div class="opt-label">Image generation</div><div class="opt-desc">Create visuals</div></div>
+      <div class="opt-card" data-val="memory"><span class="opt-icon">🧠</span><div class="opt-label">Memory</div><div class="opt-desc">Remembers past chats</div></div>
+    </div>
+    <div class="nav-row">
+      <button class="btn btn-ghost" onclick="goBack(2)">← Back</button>
+      <button class="btn btn-primary btn-big" onclick="goNext(2)">Continue →</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: IDENTITY -->
+  <div class="section" id="sec3">
+    <div class="section-eyebrow">Step 4 of 6</div>
+    <div class="section-title">Name your AI.</div>
+    <div class="section-sub">Give it an identity. This is what users will see and interact with.</div>
+    <div class="field">
+      <label>AI name <span style="color:var(--accent)">*</span></label>
+      <input type="text" id="ai-name" placeholder='e.g. Aria, Max, Dev, Zabba Doo…' oninput="checkName()"/>
+    </div>
+    <div class="field">
+      <label>Who will use it? <span style="color:var(--text3)">(optional)</span></label>
+      <input type="text" id="ai-user" placeholder="e.g. small business owners, students, my team…"/>
+    </div>
+    <div class="field">
+      <label>Extra instructions <span style="color:var(--text3)">(optional)</span></label>
+      <textarea id="ai-extra" placeholder="e.g. Always cite sources. Never discuss competitors. Respond in Spanish."></textarea>
+    </div>
+    <div class="nav-row">
+      <button class="btn btn-ghost" onclick="goBack(3)">← Back</button>
+      <button class="btn btn-primary btn-big" id="next3" disabled onclick="goNext(3)">Continue →</button>
+    </div>
+  </div>
+
+  <!-- STEP 4: GUARDRAILS -->
+  <div class="section" id="sec4">
+    <div class="section-eyebrow">Step 5 of 6</div>
+    <div class="section-title">Set the guardrails.</div>
+    <div class="section-sub">Fine-tune the behaviour boundaries.</div>
+    <div class="slider-field">
+      <label>Response length <span class="slider-val" id="len-label">Balanced</span></label>
+      <input type="range" min="1" max="3" step="1" value="2" id="len-slider" oninput="updateSlider('len-slider','len-label',['Brief','Balanced','Detailed'])"/>
+      <div class="slider-ticks"><span>Brief</span><span>Balanced</span><span>Detailed</span></div>
+    </div>
+    <div class="slider-field">
+      <label>Creativity level <span class="slider-val" id="cre-label">Balanced</span></label>
+      <input type="range" min="1" max="3" step="1" value="2" id="cre-slider" oninput="updateSlider('cre-slider','cre-label',['Factual only','Balanced','Highly creative'])"/>
+      <div class="slider-ticks"><span>Factual only</span><span>Balanced</span><span>Highly creative</span></div>
+    </div>
+    <div class="field">
+      <label>Topics to avoid <span style="color:var(--text3)">(optional)</span></label>
+      <input type="text" id="avoid" placeholder="e.g. politics, competitor names, legal advice…"/>
+    </div>
+    <div class="nav-row">
+      <button class="btn btn-ghost" onclick="goBack(4)">← Back</button>
+      <button class="btn btn-primary btn-big" onclick="buildAndShow()">Build my AI ✦</button>
+    </div>
+  </div>
+
+  <!-- STEP 5: OUTPUT -->
+  <div class="section" id="sec5">
+    <div class="section-eyebrow">Done — your AI is ready</div>
+    <div class="output-header">
+      <div class="ai-avatar">🤖</div>
+      <div>
+        <div class="ai-name-display" id="out-name">—</div>
+        <div class="ai-name-sub" id="out-sub">custom AI · built with Build-AI-Bare</div>
+      </div>
+    </div>
+    <div class="chips-row" id="out-chips"></div>
+    <div class="prompt-box" id="out-prompt"></div>
+    <div class="actions-grid">
+      <button class="action-btn" onclick="copyPrompt()">
+        <span class="ab-icon">📋</span>
+        <div class="ab-label">Copy prompt</div>
+        <div class="ab-sub">Paste into any AI platform</div>
+      </button>
+      <button class="action-btn" onclick="downloadPrompt()">
+        <span class="ab-icon">💾</span>
+        <div class="ab-label">Download .txt</div>
+        <div class="ab-sub">Save to your device</div>
+      </button>
+      <button class="action-btn" onclick="shareConfig()">
+        <span class="ab-icon">🔗</span>
+        <div class="ab-label">Share config</div>
+        <div class="ab-sub">Copy shareable URL</div>
+      </button>
+      <button class="action-btn" onclick="downloadJSON()">
+        <span class="ab-icon">📦</span>
+        <div class="ab-label">Export JSON</div>
+        <div class="ab-sub">For developers</div>
+      </button>
+    </div>
+    <button class="restart-btn" onclick="startOver()">↩ start over — build another AI</button>
+  </div>
+
+</div><!-- end main-card -->
+
+<footer>
+  <strong style="color:var(--text2)">Build-AI-Bare</strong> — open source · free forever ·
+  <a href="https://github.com/" target="_blank">contribute on GitHub</a>
+  <br/><br/>
+  "Stuff it with whatever you need." 🐻
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const TOTAL = 6;
+let cur = 0;
+
+const state = {
+  purpose: null,
+  personality: null,
+  tools: [],
+  name: '',
+  user: '',
+  extra: '',
+  length: 2,
+  creativity: 2,
+  avoid: ''
+};
+
+// ── PROGRESS ──
+function renderProgress() {
+  const t = document.getElementById('progTrack');
+  t.innerHTML = '';
+  for (let i = 0; i < TOTAL; i++) {
+    const d = document.createElement('div');
+    d.className = 'prog-seg' + (i < cur ? ' done' : i === cur ? ' active' : '');
+    t.appendChild(d);
+  }
+}
+renderProgress();
+
+// ── SINGLE SELECT ──
+function setupSingle(gridId, key, nextId) {
+  document.querySelectorAll('#' + gridId + ' .opt-card').forEach(c => {
+    c.addEventListener('click', () => {
+      document.querySelectorAll('#' + gridId + ' .opt-card').forEach(x => x.classList.remove('selected'));
+      c.classList.add('selected');
+      state[key] = c.dataset.val;
+      if (nextId) document.getElementById(nextId).disabled = false;
+    });
+  });
+}
+
+// ── MULTI SELECT ──
+function setupMulti(gridId) {
+  document.querySelectorAll('#' + gridId + ' .opt-card').forEach(c => {
+    c.addEventListener('click', () => {
+      c.classList.toggle('selected');
+      const v = c.dataset.val;
+      if (c.classList.contains('selected')) {
+        if (!state.tools.includes(v)) state.tools.push(v);
+      } else {
+        state.tools = state.tools.filter(x => x !== v);
+      }
+    });
+  });
+}
+
+setupSingle('purpose-grid', 'purpose', 'next0');
+setupSingle('personality-grid', 'personality', 'next1');
+setupMulti('tools-grid');
+
+function checkName() {
+  state.name = document.getElementById('ai-name').value.trim();
+  document.getElementById('next3').disabled = state.name.length === 0;
+}
+
+function updateSlider(id, labelId, labels) {
+  const v = parseInt(document.getElementById(id).value);
+  document.getElementById(labelId).textContent = labels[v - 1];
+}
+
+// ── NAVIGATION ──
+function goNext(from) {
+  document.getElementById('sec' + from).classList.remove('active');
+  cur = from + 1;
+  document.getElementById('sec' + cur).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  renderProgress();
+}
+
+function goBack(from) {
+  document.getElementById('sec' + from).classList.remove('active');
+  cur = from - 1;
+  document.getElementById('sec' + cur).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  renderProgress();
+}
+
+// ── BUILD ──
+const purposeLabels = { personal:'Personal assistant', creative:'Creative writing', business:'Business & productivity', research:'Research & learning', coding:'Coding companion', support:'Customer support' };
+const personalityLabels = { professional:'Professional', warm:'Warm & friendly', witty:'Witty & playful', socratic:'Socratic', concise:'Ultra-concise', mentor:'Mentor' };
+const toolLabels = { web_search:'Web search', code_exec:'Code execution', files:'File reading', email_cal:'Email & calendar', image_gen:'Image generation', memory:'Memory' };
+const lengthMap = { 1:'Keep all responses brief — 1 to 3 sentences unless the user explicitly asks for more detail.', 2:'Match response length to the complexity of the question.', 3:'Provide thorough, detailed responses with ample context and explanation.' };
+const creativityMap = { 1:'Stick strictly to facts. Do not speculate or generate fictional content.', 2:'Balance factual accuracy with creative thinking. Use examples and analogies.', 3:'Embrace creative, imaginative, exploratory responses. Generate ideas freely.' };
+const purposeDesc = { personal:'Help the user manage their life, tasks, scheduling, and personal goals.', creative:'Assist with creative writing, storytelling, brainstorming, and imaginative projects.', business:'Support business tasks including analysis, strategy, communication, and productivity.', research:'Help the user research topics deeply, synthesize information, and learn effectively.', coding:'Assist with writing, debugging, reviewing, and understanding code.', support:'Answer user questions helpfully, resolve issues, and escalate when needed.' };
+const personalityDesc = { professional:'Communicate in a professional, precise, and clear manner.', warm:'Be warm, approachable, and friendly. Use encouraging language.', witty:'Be clever and playful. Use wit and humor where appropriate.', socratic:'Use the Socratic method — ask thoughtful questions to guide thinking.', concise:'Be extremely concise. Get to the point immediately.', mentor:'Act as a mentor — explain reasoning and guide the user toward understanding.' };
+
+function buildPrompt() {
+  state.length = parseInt(document.getElementById('len-slider').value);
+  state.creativity = parseInt(document.getElementById('cre-slider').value);
+  state.avoid = document.getElementById('avoid').value.trim();
+  state.user = document.getElementById('ai-user').value.trim();
+  state.extra = document.getElementById('ai-extra').value.trim();
+
+  const name = state.name || 'Assistant';
+  let p = `# System prompt for ${name}\n`;
+  p += `Generated by Build-AI-Bare\n`;
+  p += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+  p += `## Identity\nYou are ${name}`;
+  if (state.user) p += `, an AI assistant designed for ${state.user}`;
+  p += `.\n\n`;
+  p += `## Primary purpose\n${purposeLabels[state.purpose] || state.purpose}. ${purposeDesc[state.purpose] || ''}\n\n`;
+  p += `## Personality & tone\n${personalityDesc[state.personality] || ''}\n\n`;
+  if (state.tools.length > 0) {
+    p += `## Available tools\nYou have access to the following capabilities:\n`;
+    const td = { web_search:'- Web search: Search the internet for current information.', code_exec:'- Code execution: Write and run code to solve problems.', files:'- File reading: Read and analyze documents, PDFs, and data files.', email_cal:'- Email & calendar: Read/send emails and manage calendar events.', image_gen:'- Image generation: Create images based on user descriptions.', memory:'- Memory: Remember information from previous conversations.' };
+    state.tools.forEach(t => { p += (td[t] || `- ${t}`) + '\n'; });
+    p += '\n';
+  }
+  p += `## Response length\n${lengthMap[state.length]}\n\n`;
+  p += `## Creativity\n${creativityMap[state.creativity]}\n\n`;
+  if (state.avoid) p += `## Topics to avoid\nDo not discuss: ${state.avoid}.\n\n`;
+  if (state.extra) p += `## Additional instructions\n${state.extra}\n\n`;
+  p += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nEnd of system prompt.`;
+  return p;
+}
+
+function buildAndShow() {
+  const prompt = buildPrompt();
+  window._prompt = prompt;
+
+  document.getElementById('out-name').textContent = state.name || 'Your AI';
+  document.getElementById('out-prompt').textContent = prompt;
+
+  const chips = document.getElementById('out-chips');
+  chips.innerHTML = '';
+  const addChip = t => { const c = document.createElement('div'); c.className = 'chip'; c.textContent = t; chips.appendChild(c); };
+  addChip(purposeLabels[state.purpose] || state.purpose);
+  addChip(personalityLabels[state.personality] || state.personality);
+  state.tools.forEach(t => addChip(toolLabels[t] || t));
+  if (state.tools.length === 0) addChip('no tools');
+
+  goNext(4);
+}
+
+// ── ACTIONS ──
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function copyPrompt() {
+  navigator.clipboard.writeText(window._prompt || '').then(() => showToast('✓ Copied to clipboard'));
+}
+
+function downloadPrompt() {
+  const name = (state.name || 'my-ai').toLowerCase().replace(/\s+/g, '-');
+  const blob = new Blob([window._prompt || ''], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${name}-system-prompt.txt`;
+  a.click();
+  showToast('✓ Downloaded!');
+}
+
+function downloadJSON() {
+  const name = (state.name || 'my-ai').toLowerCase().replace(/\s+/g, '-');
+  const data = JSON.stringify({ ...state, generatedBy: 'Build-AI-Bare', version: '0.1', prompt: window._prompt }, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${name}-config.json`;
+  a.click();
+  showToast('✓ JSON exported!');
+}
+
+function shareConfig() {
+  const params = new URLSearchParams({
+    p: state.purpose || '',
+    pe: state.personality || '',
+    t: state.tools.join(','),
+    n: state.name,
+    l: state.length,
+    c: state.creativity
+  });
+  const url = window.location.origin + window.location.pathname + '?' + params.toString();
+  navigator.clipboard.writeText(url).then(() => showToast('✓ Share URL copied!'));
+}
+
+// ── LOAD FROM URL PARAMS ──
+function loadFromParams() {
+  const p = new URLSearchParams(window.location.search);
+  if (p.get('n')) {
+    state.purpose = p.get('p') || null;
+    state.personality = p.get('pe') || null;
+    state.tools = p.get('t') ? p.get('t').split(',').filter(Boolean) : [];
+    state.name = p.get('n') || '';
+    state.length = parseInt(p.get('l')) || 2;
+    state.creativity = parseInt(p.get('c')) || 2;
+    if (state.purpose && state.personality && state.name) {
+      document.getElementById('ai-name').value = state.name;
+      buildAndShow();
+    }
+  }
+}
+
+function startOver() {
+  Object.assign(state, { purpose: null, personality: null, tools: [], name: '', user: '', extra: '', length: 2, creativity: 2, avoid: '' });
+  document.querySelectorAll('.opt-card').forEach(c => c.classList.remove('selected'));
+  ['ai-name','ai-user','ai-extra','avoid'].forEach(id => { document.getElementById(id).value = ''; });
+  document.getElementById('len-slider').value = 2;
+  document.getElementById('cre-slider').value = 2;
+  document.getElementById('len-label').textContent = 'Balanced';
+  document.getElementById('cre-label').textContent = 'Balanced';
+  document.getElementById('next0').disabled = true;
+  document.getElementById('next1').disabled = true;
+  document.getElementById('next3').disabled = true;
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  cur = 0;
+  document.getElementById('sec0').classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  renderProgress();
+}
+
+loadFromParams();
+</script>
+</body>
+</html>
